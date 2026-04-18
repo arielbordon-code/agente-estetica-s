@@ -1,0 +1,5 @@
+.env
+google-credentials.json
+__pycache__/
+*.pyc
+agente-env/
