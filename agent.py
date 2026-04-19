@@ -122,7 +122,11 @@ class EsteticaAgent:
     MODEL = "gemini-2.5-flash"
 
     def __init__(self, api_key: Optional[str] = None):
-        self.client = genai.Client(api_key=api_key) if api_key else genai.Client()
+        import os
+        key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not key:
+            raise ValueError("GEMINI_API_KEY no está configurada")
+        self.client = genai.Client(api_key=key)
         self.conversations: dict[str, Conversation] = {}
 
     def get_or_create_conversation(self, phone_number: str) -> Conversation:
