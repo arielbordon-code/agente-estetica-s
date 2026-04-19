@@ -19,6 +19,8 @@ from agent import EsteticaAgent
 
 load_dotenv()
 
+print(f"[DEBUG] GEMINI_API_KEY = {os.getenv('GEMINI_API_KEY', 'NO ENCONTRADA')[:10]}...")
+
 app = Flask(__name__)
 agent = EsteticaAgent(api_key=os.getenv("GEMINI_API_KEY"))
 
