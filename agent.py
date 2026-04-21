@@ -157,6 +157,7 @@ class Conversation:
     phone_number: str
     messages: list = field(default_factory=list)
     stage: str = "inicio"  # inicio | calificacion | cierre
+    turno_registrado: bool = False
 
 
 class EsteticaAgent:
@@ -236,19 +237,26 @@ class EsteticaAgent:
         """Detecta la señal de turno, registra en Sheets y la limpia del mensaje."""
         import re
         patron = r"##TURNO\|([^|]*)\|([^|]*)\|([^|]*)\|([^#]*)##"
+        # Siempre limpiamos la señal del mensaje aunque ya esté registrado
         match = re.search(patron, mensaje)
-        if match:
-            nombre, tratamiento, sucursal, horario = match.groups()
-            registrar_lead(
-                telefono=phone_number,
-                nombre=nombre.strip(),
-                tratamiento=tratamiento.strip(),
-                sucursal=sucursal.strip(),
-                horario=horario.strip(),
-            )
-            print(f"[Sheets] Lead registrado: {nombre} — {tratamiento}")
-            # Eliminamos la señal del mensaje antes de enviarlo al paciente
-            mensaje = re.sub(patron, "", mensaje).strip()
+        mensaje = re.sub(patron, "", mensaje).strip()
+        if not match:
+            return mensaje
+        conv = self.conversations.get(phone_number)
+        if conv and conv.turno_registrado:
+            print(f"[Sheets] Turno duplicado ignorado para {phone_number}")
+            return mensaje
+        nombre, tratamiento, sucursal, horario = match.groups()
+        registrar_lead(
+            telefono=phone_number,
+            nombre=nombre.strip(),
+            tratamiento=tratamiento.strip(),
+            sucursal=sucursal.strip(),
+            horario=horario.strip(),
+        )
+        print(f"[Sheets] Lead registrado: {nombre} — {tratamiento}")
+        if conv:
+            conv.turno_registrado = True
         return mensaje
 
     def get_conversation_summary(self, phone_number: str) -> dict:
